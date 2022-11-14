@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
-#Integración de los datos
+from sklearn.model_selection import cross_validate
+from sklearn import tree
+
 data = pd.read_csv("Credit Score.csv", low_memory=False)
 #data = pd.read_excel("Credit score classification.xlsx",sheet_name=0)
 #Configuramos los parámetros para que imprima de forma completa
@@ -99,27 +101,50 @@ X_train, Y_train = sm.fit_resample(X_train,Y_train) #Se almacenan el resultado e
 #X_train,Y_train = oversample.fit_resample(X_train, Y_train)
 
 Y_train.value_counts().plot(kind='bar', title="SMOTE")# Objetivo del 70%
-plt.show()
+#plt.show()
 
 print(data.head())
+print("-------- Normalización --------")
+from sklearn.preprocessing import MinMaxScaler
+min_max_scaler = MinMaxScaler()
+min_max_scaler.fit(data[['Age','Annual_Income','Num_Bank_Accounts','Num_Credit_Card','Num_of_Loan','Outstanding_Debt','Credit_Utilization_Ratio','Monthly_Balance']]) #Ajuste de los parametros: max - min
 
+#Se aplica la normalización a 70%  y 30%
+X_train[['Age','Annual_Income','Num_Bank_Accounts','Num_Credit_Card','Num_of_Loan','Outstanding_Debt','Credit_Utilization_Ratio','Monthly_Balance']]= min_max_scaler.transform(X_train[['Age','Annual_Income','Num_Bank_Accounts','Num_Credit_Card','Num_of_Loan','Outstanding_Debt','Credit_Utilization_Ratio','Monthly_Balance']]) #70%
+X_test[['Age','Annual_Income','Num_Bank_Accounts','Num_Credit_Card','Num_of_Loan','Outstanding_Debt','Credit_Utilization_Ratio','Monthly_Balance']]= min_max_scaler.transform(X_test[['Age','Annual_Income','Num_Bank_Accounts','Num_Credit_Card','Num_of_Loan','Outstanding_Debt','Credit_Utilization_Ratio','Monthly_Balance']])  #30%
+print(data.head())
 print("-------- Validación cruzada --------")
+print("-------- Tree --------")
 #Método de ML a usar en la validación cruzada
-from sklearn import tree
 modelTree = tree.DecisionTreeClassifier(criterion='gini', min_samples_leaf=2, max_depth=10)
+resultadosTree = pd.DataFrame()
+scores = cross_validate(modelTree, X_train, Y_train, cv=10, scoring=('accuracy','precision_macro','recall_macro'), return_train_score=False, return_estimator=False)
+resultadosTree=pd.DataFrame(scores)
+resultadosTree=resultadosTree.rename(columns={'test_accuracy':'Tree_accuracy','test_precision_macro':'Tree_precision','test_recall_macro':'Tree_recall'})
+print(resultadosTree)
 
+print("-------- Neural Network --------")
+from sklearn.neural_network import MLPClassifier
+resultadosNN = pd.DataFrame()
+modelNN = MLPClassifier(activation="logistic",hidden_layer_sizes=(5), learning_rate='constant',
+                     learning_rate_init=0.2, momentum= 0.3, max_iter=5000, random_state=3)
+scores = cross_validate(modelNN, X_train, Y_train, cv=10, scoring=('accuracy','precision_macro','recall_macro'), return_train_score=False, return_estimator=False)
+resultadosNN = pd.DataFrame(scores)
+resultadosNN=resultadosNN.rename(columns={'test_accuracy':'NN_accuracy','test_precision_macro':'NN_precision','test_recall_macro':'NN_recall'})
+print(resultadosNN)
+         
+print("-------- KNN--------")
 
-#Validación Cruzada: division, aprendizaje, evaluacion
-from sklearn.model_selection import cross_validate
-#scores = cross_validate(modelNN, X_train, Y_train, cv=10, scoring=('f1', 'accuracy','precision', 'recall'), return_train_score=False, return_estimator=False)
-#scores=pd.DataFrame(scores) #Se almacenan los resultados en un dataframe
-#print(scores)
-from sklearn.model_selection import KFold
+from sklearn.neighbors  import KNeighborsClassifier 
+modelKnn = KNeighborsClassifier(n_neighbors=1, metric='euclidean')
+scores = cross_validate(modelKnn, X_train, Y_train, cv=10, scoring=('accuracy','precision_macro','recall_macro'), return_train_score=False, return_estimator=False)
+resultadosKNN = pd.DataFrame(scores)
+resultadosKNN=resultadosKNN.rename(columns={'test_accuracy':'KNN_accuracy','test_precision_macro':'KNN_precision','test_recall_macro':'KNN_recall'})
+print(resultadosKNN)
 
-
-kfold_validacion = KFold(10) # Acá indicamos cuantos fold queremos. En nuestro caso elegimos 10.and
-from sklearn.model_selection import cross_val_score
-
-resultados = cross_val_score(modelTree, X_train, Y_train, cv = kfold_validacion)
-print(resultados)
-resultados.mean() # para ver el promedio de los resultados
+from  sklearn.linear_model import LogisticRegression
+LogReg = LogisticRegression()
+scores = cross_validate(LogReg, X_train, Y_train, cv=10, scoring=('accuracy','precision_macro','recall_macro'), return_train_score=False, return_estimator=False)
+resultadosLogReg = pd.DataFrame(scores)
+resultadosLogReg=resultadosLogReg.rename(columns={'test_accuracy':'LG_accuracy','test_precision_macro':'LG_precision','test_recall_macro':'LG_recall'})
+print(resultadosLogReg)
