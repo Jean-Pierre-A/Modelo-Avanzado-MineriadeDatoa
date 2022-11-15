@@ -50,14 +50,31 @@ data.Num_Credit_Card[data["Num_Credit_Card"]>=10 ] = None
 data.Num_of_Loan[data["Num_of_Loan"]<=0 ] = None
 data.Num_of_Loan[data["Num_of_Loan"] >= 5 ] = None
 
-#data['Num_Bank_Accounts'].value_counts().plot(kind='bar')
+data['Occupation'].value_counts().plot(kind='bar', title="Occupation")
+plt.show()
 
-#data.Age[data["Num_Bank_Accounts"]<=0 ] = None
+data['Type_of_Loan'].value_counts().plot(kind='bar', title="Tipos Type_of_Loan préstamos")
+plt.show()
 
-# Mostrar el gráfico
-#plt.show()
+data['Credit_Mix'].value_counts().plot(kind='bar', title="Credit Mix")
+plt.show()
 
+data['Payment_of_Min_Amount'].value_counts().plot(kind='bar', title="Payment_of_Min_Amount")
+plt.show()
+
+data['Age'].plot(kind='box')
+plt.show()
+
+data['Num_Bank_Accounts'].plot(kind='box')
+plt.show()
+
+data['Num_Credit_Card'].plot(kind='box')
+plt.show()
+
+data['Num_of_Loan'].plot(kind='box')
+plt.show()
 #Imputación de nulos
+
 print("-------- Imputación de nulos --------")
 ImpNumeros = SimpleImputer(missing_values=np.nan, strategy='mean')
  
@@ -242,4 +259,4 @@ print(metrics.classification_report( y_true=Y_test, y_pred=Y_pred, target_names=
 print("--------Exportando Modelo ----")
 filename = 'modelo-clas.pkl'
 variables= X.columns._values
-pickle.dump([modelTree,labelencoder,variables,min_max_scaler], open(filename, 'wb')) #write
+pickle.dump([modelTree,labelencoder,variables,min_max_scaler], open(filename, 'wb'))
